@@ -34,3 +34,5 @@ The cache itself is represented with a `char*` type, as each `char` is a byte in
 ## Results:
 After successful implementation, the software cache was, on average, 2-3 times faster than C's standard file I/O implementation functions.
 
+## Code: 
+Available upon request (patrick_li@brown.edu or patrickli2021@gmail.com)
