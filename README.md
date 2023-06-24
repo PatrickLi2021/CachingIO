@@ -1,5 +1,8 @@
 # CachingI/O
 
+## Code: 
+Available upon request (patrick_li@brown.edu or patrickli2021@gmail.com)
+
 ## Motivation:
 Due to the design of Hard Disk Drives (HDD, "disks"), interacting with data on disk involves waiting on several slow physical mechanisms. Magnetic hard disks contain a spinning platter with a thin magnetic coating, writing 0's and 1's as tiny areas of magnetic North or South on the platter. These hard disks require requests to wait for the platters to spin and the metal arms to move to the right place where they can read data off the disk.
 
@@ -33,6 +36,3 @@ The cache itself is represented with a `char*` type, as each `char` is a byte in
 
 ## Results:
 After successful implementation, the software cache was, on average, 2-3 times faster than C's standard file I/O implementation functions.
-
-## Code: 
-Available upon request (patrick_li@brown.edu or patrickli2021@gmail.com)
