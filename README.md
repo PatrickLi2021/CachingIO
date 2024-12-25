@@ -1,33 +1,38 @@
-Project 3: Caching I/O
-======================
+# CachingI/O
 
-<!-- TODO: Fill this out. -->
+## Code: 
+Available upon request (patrick_li@brown.edu or patrickli2021@gmail.com)
 
-## Design Overview:
-The overall design of this project hinged around creating a cache that would drastically speed up the runtime of certain file operations (mainly `read`, `write`, `readc`, `seek`, and `writec`). When the program asks my I/O library to write a byte to a file, instead of immediately going to the disk, we put that byte (or bytes) into a cache, then write the entire cache to disk at some point. All of the functions that were implemented follow the public API that the stencil code provides. This approach significantly reduces the amount of system calls that need to be made and speeds up the runtime.
+## Motivation:
+Due to the design of Hard Disk Drives (HDD, "disks"), interacting with data on disk involves waiting on several slow physical mechanisms. Magnetic hard disks contain a spinning platter with a thin magnetic coating, writing 0's and 1's as tiny areas of magnetic North or South on the platter. These hard disks require requests to wait for the platters to spin and the metal arms to move to the right place where they can read data off the disk.
 
-To begin, I design my file struct to incorporate 4 main pieces of metadata:
-- A `size_t` value that represents the whether or not the cache has been changed
-- A `file_ptr` that represents the index of where in the file we currently are
-- A `cache_usage` variable that represents how much of the cache is currently being used
-- A `cache_head` that stores where the cache is relative to the file
-- A `file_size` variable that stores the size of the file
+Caching alows us to sacrifice a small amount of data integrity in order to gain efficiency in performance. To do this, the computer temporarily holds the data you are using inside of its main memory (DRAM) instead of working directly with the disk. In other words, the main memory (DRAM) acts as a cache for the disk. The reason why caching is useful is because the alternative (system calls) are extremely expensive: they require the changing of the processor's privilege mode, a multitude of safety checks, and kernel code. These system calls go directly to disk.
 
-For the `io300_readc` function, I check to see if the file pointer is beyond the file boundaries. Afterwards, I check to see if the file pointer is beyond the cache. If it is and the cache contents have been changed, I flush to the file, increment my cache_head, and re-populate the cache. After that, I assign the char to return equal to the new item from the cache.
+## Overview:
+**This project is a file I/O cache written in C designed to speed up the reading and writing of data to and from a filesystem.** The cache is written entirely in software and implements an input/output (I/O) library that supports operations such as `read()` (reading data from files), `write()` (writing data to files), or `seek()` (moving to a different offset within the file). The I/O library uses a cache to prefetch data and reduce the number of hard disk operations required.
 
-For the `io300_writec` function, I implement it similarly to the io300_readc function except I write the new character into the cache and return that.
+When a byte is projected to be written to a file, instead of immediately going to disk, the byte(s) is stored in a cache, and the entire cache is written to disk at some point. This approach significantly reduces the amount of system calls that need to be made and speeds up runtime.
 
-For the `io300_read` function, I first check if the area to read in is located entirely within the cache. Otherwise, I seek to the file pointer and read the bytes in directly to the buffer.
+## Initialization and Metadata:
+The creation of a cache in software required the introduction of several pieces of metadata:
 
-For the `io300_write` function, I also make a check to see if the file pointer is beyond the cache boundaries. If not and the file pointer is within the cache, we memcpy directly from the buffer to the cache. If it’s beyond the boundaries, then we read directly from the file to the buffer.
+- `size_t changed`: This is a flag representing whether the contents of the cache have changed (1 if they have changed, 0 if they have NOT changed)
+- `size_t file_ptr`: This is a numerical index that represents where in the file our current position is
+- `size_t cache_usage`: This is a value that represents how much of the cache is currently being used in bytes.
+- `size_t cache_head`: This is a value that represents where the cache is stored relative to the file (the value it takes on can only be multiples of the cache size)
+- `size_t file_size`: This value keeps track of the overall size of the file in bytes.
 
-## Collaborators:
-Angela Li
+## Cache Operations:
+The cache itself is represented with a `char*` type, as each `char` is a byte in size. There are a total of 6 operations that can be performed on the cache:
 
-## Extra Credit attempted:
-N/A
+- `read()`: This function reads _n_ bytes from the file into a buffer, assuming that the buffer is large enough. Upon failure, -1 is returned. Upon success, the number of bytes that were placed into the provided buffer are returned.
+- `write()`: This function writes _n_ bytes from the start of a provided buffer into the file, assuming that the buffer is large enough. On failure, -1 is returned. On success, the number of bytes that were writtent oteh file is returned.
+- `readc()`: This function reads a single byte from the end of the file and returns it. It returns -1 on failure or if the end of the file has been reached.
+- 'writec()': This function simply writes a single byte to the file. It returns the byte that was written upon success and -1 on failure.
+- `seek()`: This function repositions the file offset to the given value, which causes subsequent reads and writes to take place from the new offset. It returns the resulting offset location as measured in bytes from the beginning of the file. On error, a value of -1 is returned.
+- `open()`: This function allocates and initializes a new file struct that will wrap the given file path. In addition, it gives the file we are operating on a description to be used for debugging purposes
+- `close()`: This function closes and cleans up the given file. Additionally, any allocated data is freed and any cached data that resides in RAM is flushed to disk.
+- `flush()`: This function removes any in-RAM data from the cache and flushes it to disk.
 
-## How long did it take to complete Caching I/O?
-30 hours
-
-<!-- Enter an approximate number of hours that you spent actively working on the project. -->
+## Results:
+After successful implementation, the software cache was, on average, 2-3 times faster than C's standard file I/O implementation functions.
